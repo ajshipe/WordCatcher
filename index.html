@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Elijah's Word Catcher</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body {
+    width: 100%; height: 100%; overflow: hidden;
+    font-family: 'Trebuchet MS', 'Comic Sans MS', sans-serif;
+    background: #0d1b2a;
+    color: #fff;
+    touch-action: manipulation;
+  }
+  #game {
+    width: 100vw; height: 100vh;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, #87ceeb 0%, #87ceeb 70%, #6ab04c 70%, #4a8b3a 100%);
+  }
+
+  /* TITLE */
+  #title {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #1e3a5f 0%, #2d5a8c 60%, #6ab04c 100%);
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+  }
+  #title h1 {
+    font-size: clamp(40px, 9vw, 72px);
+    color: #ffd700;
+    text-shadow: 4px 4px 0 #000, 8px 8px 0 rgba(0,0,0,0.3);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  #title .subtitle {
+    font-size: clamp(20px, 4vw, 30px);
+    color: #fff;
+    text-shadow: 3px 3px 0 #000;
+    margin-bottom: 30px;
+  }
+  .pixel-creature { width: 80px; height: 80px; image-rendering: pixelated; image-rendering: crisp-edges; }
+  #title .creatures { display: flex; gap: 12px; margin-bottom: 30px; flex-wrap: wrap; justify-content: center; }
+
+  .big-button {
+    background: #50c878; color: #fff;
+    border: 5px solid #2e8b57;
+    padding: 18px 36px;
+    font-family: inherit; font-weight: bold; font-size: 22px;
+    cursor: pointer;
+    text-shadow: 3px 3px 0 #1a4a2e;
+    border-radius: 10px;
+    margin: 6px;
+    min-height: 60px;
+    box-shadow: 0 6px 0 #1a4a2e;
+    transition: transform 0.08s, box-shadow 0.08s;
+    letter-spacing: 1px;
+  }
+  .big-button:active { transform: translateY(4px); box-shadow: 0 2px 0 #1a4a2e; }
+  .big-button.blue { background: #4a90e2; border-color: #2c5d8f; text-shadow: 3px 3px 0 #1a3a5c; box-shadow: 0 6px 0 #1a3a5c; }
+  .big-button.purple { background: #9b59b6; border-color: #6c3483; text-shadow: 3px 3px 0 #4a2466; box-shadow: 0 6px 0 #4a2466; }
+
+  /* HUD */
+  #hud {
+    position: absolute; top: 0; left: 0; right: 0;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.55);
+    z-index: 30;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #000;
+  }
+  #hud .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+  #hud .stat {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.12);
+    padding: 6px 10px;
+    border: 3px solid #2c2c2c;
+    border-radius: 6px;
+    font-size: 16px;
+  }
+  #hud .gem-icon {
+    width: 16px; height: 16px;
+    background: #50c878;
+    box-shadow: inset 2px 2px 0 #7fff9f, inset -2px -2px 0 #2e8b57;
+    transform: rotate(45deg);
+  }
+  #hud button {
+    background: #c8853d; color: #fff;
+    border: 3px solid #6b4423;
+    padding: 8px 12px;
+    font-family: inherit; font-weight: bold; font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    min-height: 44px;
+    text-shadow: 2px 2px 0 #6b4423;
+  }
+
+  /* PLAY */
+  #play { position: absolute; inset: 0; display: none; }
+  #play.active { display: block; }
+
+  #basket {
+    position: absolute;
+    bottom: 12%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 80px;
+    z-index: 10;
+    transition: left 0.4s ease-out;
+    image-rendering: pixelated;
+  }
+
+  .word-block {
+    position: absolute;
+    background: linear-gradient(135deg, #d4a574 0%, #a0703f 100%);
+    border: 5px solid #6b4423;
+    box-shadow: inset 3px 3px 0 #e8c39e, inset -3px -3px 0 #6b4423, 0 4px 12px rgba(0,0,0,0.4);
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: bold;
+    color: #2c1810;
+    text-shadow: 2px 2px 0 #fff8dc;
+    letter-spacing: 2px;
+    cursor: pointer;
+    z-index: 5;
+    min-width: 100px;
+    text-align: center;
+    transition: transform 0.1s;
+  }
+  .word-block.correct { background: linear-gradient(135deg, #50c878 0%, #2e8b57 100%); border-color: #1a4a2e; color: #fff; text-shadow: 2px 2px 0 #1a4a2e; }
+  .word-block.wrong { background: linear-gradient(135deg, #e74c3c 0%, #922b21 100%); border-color: #5d1a13; color: #fff; text-shadow: 2px 2px 0 #5d1a13; animation: shake 0.3s; }
+  .word-block.caught { animation: catchPop 0.4s ease-out forwards; }
+
+  @keyframes shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(-6px,0); } 75% { transform: translate(6px,0); } }
+  @keyframes catchPop { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.8; } 100% { transform: scale(0); opacity: 0; } }
+
+  #target {
+    position: absolute;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    border: 4px solid #ffd700;
+    padding: 12px 20px;
+    border-radius: 12px;
+    z-index: 20;
+    text-align: center;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+    min-width: 240px;
+  }
+  #target .label { color: #ffd700; font-size: 14px; margin-bottom: 6px; }
+  #target .listen-btn {
+    background: #4a90e2; border: 3px solid #2c5d8f; color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-family: inherit; font-weight: bold; font-size: 18px;
+    cursor: pointer;
+    text-shadow: 2px 2px 0 #1a3a5c;
+    min-height: 50px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  #target .listen-btn:active { transform: translateY(2px); }
+
+  #ground {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 12%;
+    background: linear-gradient(180deg, #6ab04c 0%, #4a8b3a 50%, #8b5a2b 50%, #6b4423 100%);
+    z-index: 8;
+    border-top: 4px solid #2e8b57;
+  }
+
+  #lives { display: flex; gap: 3px; }
+  .heart {
+    width: 22px; height: 22px;
+    background: #e74c3c;
+    clip-path: polygon(50% 100%, 0% 35%, 0% 0%, 25% 0%, 50% 25%, 75% 0%, 100% 0%, 100% 35%);
+    transition: opacity 0.3s;
+  }
+  .heart.lost { background: #555; opacity: 0.4; }
+
+  /* CELEBRATION */
+  #celebration {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 50;
+    pointer-events: none;
+  }
+  #celebration.show { display: flex; }
+  #celebration .msg {
+    font-size: clamp(36px, 8vw, 64px);
+    color: #ffd700;
+    text-shadow: 4px 4px 0 #000, 0 0 30px #ffd700;
+    text-align: center;
+    animation: celebrateBounce 0.8s ease-out;
+    padding: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+  }
+  @keyframes celebrateBounce {
+    0% { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+    50% { transform: scale(1.3) rotate(8deg); }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+
+  .particle { position: absolute; width: 12px; height: 12px; pointer-events: none; z-index: 40; }
+  .gem-particle {
+    background: #50c878;
+    box-shadow: inset 2px 2px 0 #7fff9f, inset -2px -2px 0 #2e8b57;
+    transform: rotate(45deg);
+  }
+  .star-particle {
+    background: #ffd700;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    width: 16px; height: 16px;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(0) scale(1) rotate(45deg); opacity: 1; }
+    100% { transform: translateY(-150px) scale(0.5) rotate(180deg); opacity: 0; }
+  }
+  .float-up { animation: floatUp 1.2s ease-out forwards; }
+
+  /* CREATURE POPUP */
+  #creature-popup {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 60;
+    display: none;
+    text-align: center;
+    background: rgba(0,0,0,0.85);
+    border: 5px solid #ffd700;
+    border-radius: 12px;
+    padding: 20px;
+    animation: celebrateBounce 0.6s ease-out;
+  }
+  #creature-popup.show { display: block; }
+  #creature-popup .pixel-creature { margin: 0 auto 10px; width: 100px; height: 100px; }
+  #creature-popup .name { color: #ffd700; font-size: 22px; font-weight: bold; text-shadow: 2px 2px 0 #000; margin-bottom: 6px; }
+  #creature-popup .msg { color: #fff; font-size: 16px; text-shadow: 1px 1px 0 #000; }
+
+  /* TOOL UNLOCK */
+  #tool-unlock {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 150;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #tool-unlock.show { display: flex; }
+  #tool-unlock .panel {
+    background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+    border: 6px solid #6b4423;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    animation: celebrateBounce 0.6s ease-out;
+    max-width: 400px;
+  }
+  #tool-unlock h2 { color: #2c1810; font-size: 26px; text-shadow: 2px 2px 0 #fff; margin-bottom: 14px; }
+  #tool-unlock .tool-display { font-size: 100px; margin: 10px 0; }
+  #tool-unlock p { color: #2c1810; font-size: 20px; font-weight: bold; margin-bottom: 16px; }
+
+  /* BASE */
+  #base-view {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #87ceeb 0%, #87ceeb 55%, #6ab04c 55%, #4a8b3a 100%);
+    z-index: 90;
+    display: none;
+    flex-direction: column;
+    padding-top: 70px;
+    overflow-y: auto;
+  }
+  #base-view.show { display: flex; }
+  #base-view h2 { text-align: center; font-size: 30px; color: #ffd700; text-shadow: 3px 3px 0 #000; margin: 10px 0; }
+  #base-stats { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding: 12px; }
+  .stat-card {
+    background: rgba(0,0,0,0.55);
+    border: 4px solid #6b4423;
+    padding: 12px 16px;
+    border-radius: 6px;
+    text-align: center;
+    min-width: 120px;
+  }
+  .stat-card .label { font-size: 13px; color: #ffd700; }
+  .stat-card .value { font-size: 24px; font-weight: bold; color: #fff; text-shadow: 2px 2px 0 #000; }
+  #creature-area {
+    flex: 1; position: relative; min-height: 280px;
+    margin: 14px;
+    background: linear-gradient(180deg, transparent 0%, transparent 60%, rgba(0,0,0,0.2) 100%);
+    border: 4px solid #6b4423;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .roaming-creature {
+    position: absolute; bottom: 10px;
+    width: 64px; height: 64px;
+    image-rendering: pixelated;
+    transition: left 1.8s ease-in-out, transform 0.3s;
+  }
+
+  /* SETTINGS */
+  #settings {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 200;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #settings.show { display: flex; }
+  #settings .panel {
+    background: #2c2c44;
+    border: 5px solid #6b4423;
+    padding: 24px;
+    border-radius: 10px;
+    max-width: 500px; width: 100%;
+    max-height: 90vh; overflow-y: auto;
+  }
+  #settings h2 { color: #ffd700; text-align: center; margin-bottom: 16px; text-shadow: 2px 2px 0 #000; }
+  #settings .setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+  }
+  #settings button {
+    background: #4a90e2; color: #fff;
+    border: 3px solid #2c5d8f;
+    padding: 10px 16px;
+    font-family: inherit; font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    min-height: 44px;
+    text-shadow: 2px 2px 0 #1a3a5c;
+  }
+  #settings button.danger { background: #e74c3c; border-color: #922b21; text-shadow: 2px 2px 0 #5d1a13; }
+  #struggle-words {
+    margin-top: 12px; padding: 12px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 6px;
+    max-height: 150px; overflow-y: auto;
+  }
+  .word-item {
+    display: inline-block;
+    background: rgba(231,76,60,0.4);
+    padding: 4px 10px;
+    margin: 4px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+
+  /* ENDGAME */
+  #endgame {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 180;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #endgame.show { display: flex; }
+  #endgame .panel {
+    background: linear-gradient(135deg, #4a90e2 0%, #2c5d8f 100%);
+    border: 5px solid #1a3a5c;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    max-width: 400px;
+    animation: celebrateBounce 0.5s ease-out;
+  }
+  #endgame h2 { color: #ffd700; font-size: 32px; text-shadow: 3px 3px 0 #000; margin-bottom: 14px; }
+  #endgame .stats-summary { color: #fff; font-size: 18px; margin-bottom: 20px; line-height: 1.8; text-shadow: 2px 2px 0 #000; }
+
+  /* ZONE SELECT */
+  #zone-select {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    z-index: 80;
+    display: none;
+    flex-direction: column;
+    padding-top: 70px;
+    align-items: center;
+    overflow-y: auto;
+  }
+  #zone-select.show { display: flex; }
+  #zone-select h2 { color: #ffd700; font-size: 28px; text-shadow: 3px 3px 0 #000; margin: 14px 0 4px; }
+  #zone-select .hint { color: #aaa; font-size: 14px; margin-bottom: 12px; }
+  .zone-card {
+    background: linear-gradient(135deg, #6ab04c 0%, #2e8b57 100%);
+    border: 5px solid #1a4a2e;
+    padding: 18px;
+    margin: 8px;
+    border-radius: 8px;
+    width: 90%; max-width: 380px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #1a4a2e;
+    transition: transform 0.08s;
+  }
+  .zone-card:active { transform: translateY(3px); box-shadow: 0 3px 0 #1a4a2e; }
+  .zone-card.cavern { background: linear-gradient(135deg, #7f8c8d 0%, #34495e 100%); border-color: #1c2833; box-shadow: 0 6px 0 #1c2833; }
+  .zone-card.deep { background: linear-gradient(135deg, #c0392b 0%, #6e2c1f 100%); border-color: #3d1810; box-shadow: 0 6px 0 #3d1810; }
+  .zone-card h3 { font-size: 24px; color: #fff; text-shadow: 2px 2px 0 #000; margin-bottom: 4px; }
+  .zone-card p { color: #fff; text-shadow: 1px 1px 0 #000; font-size: 14px; }
+
+  .back-btn {
+    background: #95a5a6; color: #fff;
+    border: 3px solid #5d6d6e;
+    padding: 10px 16px;
+    font-family: inherit; font-weight: bold; font-size: 14px;
+    cursor: pointer;
+    border-radius: 6px;
+    min-height: 44px;
+    text-shadow: 2px 2px 0 #2c3e50;
+    margin: 14px;
+  }
+
+  .cloud {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.85;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* MOBILE - tighter, fits portrait phones */
+  @media (max-width: 600px) {
+    #hud {
+      padding: 6px 8px;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    #hud .stats { gap: 4px; }
+    #hud .stat {
+      font-size: 12px !important;
+      padding: 4px 6px !important;
+      border-width: 2px !important;
+      gap: 3px !important;
+    }
+    #hud .gem-icon { width: 12px; height: 12px; }
+    #hud button {
+      padding: 4px 8px;
+      font-size: 12px;
+      min-height: 36px;
+      border-width: 2px;
+    }
+    .heart { width: 14px; height: 14px; }
+
+    #target {
+      top: 56px;
+      padding: 6px 12px;
+      min-width: 0;
+      max-width: 90vw;
+      border-width: 3px;
+    }
+    #target .label {
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    #target .listen-btn {
+      padding: 8px 14px;
+      font-size: 16px;
+      min-height: 44px;
+      border-width: 2px;
+    }
+
+    .word-block {
+      padding: 8px 12px;
+      font-size: 22px;
+      min-width: 60px;
+      letter-spacing: 1px;
+      border-width: 3px;
+    }
+
+    #basket { width: 60px; height: 60px; bottom: 14%; }
+    #ground { height: 10%; }
+
+    #title h1 { font-size: 38px; letter-spacing: 1px; }
+    #title .subtitle { font-size: 18px; margin-bottom: 16px; }
+    #title .creatures { margin-bottom: 16px; gap: 8px; }
+    .pixel-creature { width: 56px; height: 56px; }
+    .big-button {
+      padding: 12px 22px;
+      font-size: 18px;
+      min-height: 50px;
+      border-width: 3px;
+      box-shadow: 0 4px 0 #1a4a2e;
+    }
+    .big-button.blue { box-shadow: 0 4px 0 #1a3a5c; }
+    .big-button.purple { box-shadow: 0 4px 0 #4a2466; }
+
+    .zone-card { padding: 12px; margin: 6px; }
+    .zone-card h3 { font-size: 20px; }
+    .zone-card p { font-size: 12px; }
+    #zone-select { padding-top: 60px; }
+    #zone-select h2 { font-size: 22px; margin: 8px 0 2px; }
+
+    #celebration .msg { font-size: 32px; }
+
+    #base-view { padding-top: 56px; }
+    #base-view h2 { font-size: 22px; margin: 6px 0; }
+    .stat-card { padding: 8px 12px; min-width: 90px; }
+    .stat-card .label { font-size: 11px; }
+    .stat-card .value { font-size: 18px; }
+    #crystal-tree { width: 140px !important; height: 170px !important; }
+    .branch-pip { width: 18px; height: 18px; border-width: 2px; }
+
+    #story .panel { padding: 16px; }
+    #story h3 { font-size: 18px; }
+    #story p { font-size: 14px; margin-bottom: 12px; }
+    #story .scene-art { height: 130px; margin-bottom: 10px; }
+
+    #settings .panel { padding: 16px; }
+    #settings h2 { font-size: 20px; }
+    #settings .setting-row { padding: 8px 0; font-size: 14px; }
+    #settings button { padding: 6px 10px; font-size: 13px; min-height: 36px; }
+
+    #endgame .panel { padding: 20px; }
+    #endgame h2 { font-size: 24px; }
+    #endgame .stats-summary { font-size: 15px; }
+
+    #tool-unlock .panel { padding: 20px; }
+    #tool-unlock h2 { font-size: 20px; }
+    #tool-unlock .tool-display { font-size: 70px; }
+    #tool-unlock p { font-size: 16px; }
+
+    #creature-popup { padding: 14px; }
+    #creature-popup .pixel-creature { width: 70px; height: 70px; }
+    #creature-popup .name { font-size: 17px; }
+    #creature-popup .msg { font-size: 13px; }
+  }
+
+  /* Very narrow (< 360px) */
+  @media (max-width: 360px) {
+    #hud .stat { font-size: 11px !important; padding: 3px 5px !important; }
+    .word-block { font-size: 18px; padding: 6px 10px; }
+    #target .listen-btn { font-size: 14px; padding: 6px 10px; }
+    .big-button { font-size: 16px; padding: 10px 18px; }
+  }
+
+  /* STORY PANEL */
+  #story {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 220;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #story.show { display: flex; }
+  #story .panel {
+    background: linear-gradient(135deg, #2c5d8f 0%, #1a3a5c 100%);
+    border: 5px solid #ffd700;
+    padding: 26px;
+    border-radius: 12px;
+    max-width: 500px; width: 100%;
+    text-align: center;
+    animation: celebrateBounce 0.5s ease-out;
+  }
+  #story .scene-art {
+    width: 100%;
+    height: 180px;
+    background: linear-gradient(180deg, #1a1a3e 0%, #2d2d5e 100%);
+    border: 4px solid #6b4423;
+    border-radius: 8px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  #story h3 {
+    color: #ffd700;
+    font-size: 22px;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 10px;
+  }
+  #story p {
+    color: #fff;
+    font-size: 17px;
+    line-height: 1.5;
+    text-shadow: 1px 1px 0 #000;
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  /* Crystal Tree (in base) */
+  #crystal-tree {
+    position: relative;
+    width: 200px;
+    height: 240px;
+    margin: 0 auto 10px;
+    image-rendering: pixelated;
+  }
+  .tree-status {
+    text-align: center;
+    color: #ffd700;
+    font-size: 16px;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 10px;
+  }
+  .tree-progress {
+    display: flex; justify-content: center; gap: 6px;
+    margin-bottom: 14px;
+  }
+  .branch-pip {
+    width: 24px; height: 24px;
+    background: #444;
+    border: 3px solid #222;
+    border-radius: 50%;
+    transition: all 0.4s;
+  }
+  .branch-pip.lit {
+    background: #ffd700;
+    border-color: #ff8c00;
+    box-shadow: 0 0 16px #ffd700;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px #ffd700); }
+    50% { filter: drop-shadow(0 0 20px #ffd700); }
+  }
+  .glowing { animation: glow-pulse 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<div id="game">
+
+  <div id="title">
+    <h1>WORD CATCHER</h1>
+    <div class="subtitle">⚔️ Elijah & the Crystal Tree ⚔️</div>
+    <div class="creatures">
+      <div class="pixel-creature" id="title-c1"></div>
+      <div class="pixel-creature" id="title-c2"></div>
+      <div class="pixel-creature" id="title-c3"></div>
+    </div>
+    <button class="big-button" onclick="goZoneSelect()">▶ START</button>
+    <button class="big-button blue" onclick="showBase()">🏰 MY BASE</button>
+    <button class="big-button purple" onclick="openSettings()">⚙ SETTINGS</button>
+  </div>
+
+  <div id="hud" style="display:none;">
+    <div class="stats">
+      <button onclick="goHome()">🏠</button>
+      <div class="stat"><span class="gem-icon"></span><span id="gem-count">0</span></div>
+      <div class="stat"><span id="tool-icon">🪵</span><span id="tool-name">Wood</span></div>
+      <div class="stat" id="lives-stat" style="display:none;"><div id="lives"></div></div>
+    </div>
+    <div style="display:flex; gap:6px;">
+      <button onclick="showBase()">🏰</button>
+      <button onclick="openSettings()">⚙</button>
+    </div>
+  </div>
+
+  <div id="zone-select">
+    <h2>CHOOSE A ZONE</h2>
+    <div class="hint">Catch the falling words!</div>
+    <div class="zone-card" onclick="startGame(0)">
+      <h3>🌳 The Meadow</h3>
+      <p>Easy words • Slow speed</p>
+    </div>
+    <div class="zone-card cavern" onclick="startGame(1)">
+      <h3>🪨 The Cavern</h3>
+      <p>Trickier words • Faster</p>
+    </div>
+    <div class="zone-card deep" onclick="startGame(2)">
+      <h3>🔥 The Deep</h3>
+      <p>Hard words • Fastest</p>
+    </div>
+    <button class="back-btn" onclick="goHome()">⬅ Back</button>
+  </div>
+
+  <div id="play">
+    <div id="target">
+      <div class="label">CATCH THE WORD:</div>
+      <button class="listen-btn" id="listen-btn" onclick="speakTarget()">🔊 Listen Again</button>
+    </div>
+    <div id="basket"></div>
+    <div id="ground"></div>
+  </div>
+
+  <div id="celebration"><div class="msg" id="celebration-msg"></div></div>
+
+  <div id="creature-popup">
+    <div class="pixel-creature" id="popup-creature"></div>
+    <div class="name" id="popup-name"></div>
+    <div class="msg" id="popup-msg"></div>
+  </div>
+
+  <div id="tool-unlock">
+    <div class="panel">
+      <h2>NEW TOOL UNLOCKED!</h2>
+      <div class="tool-display" id="unlock-icon">⛏️</div>
+      <p id="unlock-name">Stone Pickaxe</p>
+      <button class="big-button" onclick="closeUnlock()">AWESOME!</button>
+    </div>
+  </div>
+
+  <div id="endgame">
+    <div class="panel">
+      <h2 id="endgame-title">LEVEL CLEAR!</h2>
+      <div class="stats-summary" id="endgame-stats"></div>
+      <button class="big-button" onclick="closeEndgame()">CONTINUE</button>
+    </div>
+  </div>
+
+  <div id="base-view">
+    <h2>🏰 ELIJAH'S BASE 🏰</h2>
+    <div id="base-stats"></div>
+    <div id="creature-area"></div>
+    <button class="back-btn" style="margin: 14px auto;" onclick="goHome()">⬅ Back</button>
+  </div>
+
+  <div id="story">
+    <div class="panel">
+      <div class="scene-art" id="scene-art"></div>
+      <h3 id="story-title">A New Adventure</h3>
+      <p id="story-text">Once upon a time...</p>
+      <button class="big-button" onclick="closeStory()" id="story-btn">CONTINUE ▶</button>
+    </div>
+  </div>
+
+  <div id="settings">
+    <div class="panel">
+      <h2>⚙ Settings</h2>
+      <div class="setting-row">
+        <span>Sound</span>
+        <button id="mute-btn" onclick="toggleMute()">ON</button>
+      </div>
+      <div class="setting-row">
+        <span>Speech Speed</span>
+        <button id="speed-btn" onclick="cycleSpeed()">Normal</button>
+      </div>
+      <div class="setting-row">
+        <span>Show Word</span>
+        <button id="showword-btn" onclick="cycleShowWord()">Auto</button>
+      </div>
+      <div class="setting-row">
+        <span>Reset Progress</span>
+        <button class="danger" onclick="resetProgress()">RESET</button>
+      </div>
+      <h3 style="color:#ffd700; margin-top:18px;">📊 Words to Practice</h3>
+      <p style="font-size:13px; opacity:0.8; margin-top:4px;">Words Elijah missed most:</p>
+      <div id="struggle-words"></div>
+      <button class="big-button blue" style="margin-top:18px; width:100%;" onclick="closeSettings()">CLOSE</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const WORD_LISTS = {
+  0: ['a','and','away','big','can','come','down','find','for','go','help','here','I','in','is','it','jump','look','make','me','my','not','one','play','red','run','see','the','to','up','we','you','blue','two','three'],
+  1: ['all','am','are','at','ate','be','but','came','did','do','eat','four','get','good','have','he','into','like','must','new','no','now','on','our','out','ran','ride','saw','say','she','so','soon','that','there','they','this','too','want','was','went','what','who','will','with','yes'],
+  2: ['after','again','any','as','ask','by','could','every','from','give','going','had','has','her','him','his','how','just','know','let','live','may','of','old','once','open','over','put','some','stop','take','them','then','think','walk','were','when']
+};
+
+const ZONES = [
+  { name:'Meadow', bg: 'linear-gradient(180deg, #87ceeb 0%, #87ceeb 70%, #6ab04c 70%, #4a8b3a 100%)', baseSpeed: 0.5, distractors: 2 },
+  { name:'Cavern', bg: 'linear-gradient(180deg, #2c3e50 0%, #34495e 60%, #5d6d6e 100%)', baseSpeed: 0.8, distractors: 2 },
+  { name:'Deep',   bg: 'linear-gradient(180deg, #4a0e0e 0%, #8b1a1a 60%, #c0392b 100%)', baseSpeed: 1.1, distractors: 3 }
+];
+
+const TOOLS = [
+  { name: 'Wood',      icon: '🪵', threshold: 0   },
+  { name: 'Stone',     icon: '⛏️', threshold: 15  },
+  { name: 'Iron',      icon: '⚒️', threshold: 35  },
+  { name: 'Crystal',   icon: '💎', threshold: 70  },
+  { name: 'Legendary', icon: '⚡', threshold: 120 }
+];
+
+const CREATURES = [
+  { id:'fluffwolf',  name:'Fluff-Wolf',  color:'#d3d3d3', accent:'#696969' },
+  { id:'blockcat',   name:'Block-Cat',   color:'#ff8c42', accent:'#8b4513' },
+  { id:'skybird',    name:'Sky-Bird',    color:'#4a90e2', accent:'#ffd700' },
+  { id:'riverotter', name:'River-Otter', color:'#8b6f47', accent:'#3d2814' },
+  { id:'leafbug',    name:'Leaf-Bug',    color:'#7cb342', accent:'#33691e' },
+  { id:'starfox',    name:'Star-Fox',    color:'#ff6b35', accent:'#fff'    },
+  { id:'cloudpuff',  name:'Cloud-Puff',  color:'#ffffff', accent:'#b0c4de' },
+  { id:'rockpup',    name:'Rock-Pup',    color:'#a0826d', accent:'#5d4037' }
+];
+
+const CELEBRATIONS = ["AMAZING!", "YOU GOT IT!", "SUPER!", "EPIC!", "WAY TO GO!", "INCREDIBLE!", "BRAIN POWER!", "READING STAR!", "UNSTOPPABLE!", "WOO-HOO!"];
+
+let state = {
+  gems: 0, wordsCaught: 0, toolIdx: 0,
+  mastery: {}, struggles: {},
+  tamedCreatures: [],
+  muted: false, speedIdx: 1,
+  storyBeats: {},
+  zonesCompleted: 0,
+  showWordMode: 'auto'  // 'auto' (show if speech fails), 'always', 'never'
+};
+
+let speechWorks = null; // null=unknown, true=detected working, false=not working
+
+const SPEEDS = [
+  { label: 'Slow',   rate: 0.65 },
+  { label: 'Normal', rate: 0.85 },
+  { label: 'Fast',   rate: 1.0  }
+];
+
+// ===== STORY =====
+const STORY_BEATS = {
+  intro: {
+    title: "The Crystal Tree",
+    text: "Elijah loved to build and mine more than anything! But one dark night, the magical Crystal Tree at the heart of his world went dim. Without its light, the creatures vanished and the gems lost their power.\n\nA wise voice whispered: 'Word-runes have scattered across the land, brave builder. Catch them, and the tree will shine again!'",
+    art: 'tree-dark'
+  },
+  meadow_intro: {
+    title: "The Meadow",
+    text: "Word-runes are falling from the sky in the Meadow! Listen carefully — only catch the rune that matches the magic word. Every rune you catch fills the Crystal Tree with energy!",
+    art: 'meadow'
+  },
+  meadow_clear: {
+    title: "First Branch Lit!",
+    text: "You did it, Elijah! The first branch of the Crystal Tree is glowing again! ✨\n\nThe creatures are starting to return. But there are darker zones with stronger word-runes ahead...",
+    art: 'tree-1'
+  },
+  cavern_intro: {
+    title: "The Cavern",
+    text: "Deeper now, into the dark Cavern! The runes here fall faster and the words are trickier. Use your pickaxe and your reading power — the Crystal Tree is counting on you!",
+    art: 'cavern'
+  },
+  cavern_clear: {
+    title: "Second Branch Lit!",
+    text: "Two branches glowing! The Crystal Tree is half-bright now. More creatures have come home to live in your base.\n\nOne zone left — the deepest, hottest place of all...",
+    art: 'tree-2'
+  },
+  deep_intro: {
+    title: "The Deep",
+    text: "The final challenge! The Deep is where the hardest runes fell. The lava glows but the tree is still dim. You're the only one who can finish this, Elijah. Read fast, read true!",
+    art: 'deep'
+  },
+  deep_clear: {
+    title: "🌟 THE TREE IS RESTORED! 🌟",
+    text: "Every branch is glowing! The Crystal Tree shines brighter than ever before, and ALL the creatures have come home!\n\nElijah, Master Reader of the Crystal Realm — you saved the world! 🎉\n\n(You can keep playing to collect more gems and master more words!)",
+    art: 'tree-full'
+  },
+  first_tool: {
+    title: "Stone Pickaxe!",
+    text: "Your reading power earned you a Stone Pickaxe! Now you can mine deeper rocks and find better gems for the Crystal Tree.",
+    art: 'tool'
+  }
+};
+
+function showStory(beatId, onClose) {
+  const beat = STORY_BEATS[beatId];
+  if (!beat) return;
+  document.getElementById('story-title').textContent = beat.title;
+  document.getElementById('story-text').textContent = beat.text;
+  renderSceneArt(beat.art);
+  state.storyBeats[beatId] = true;
+  save();
+  document.getElementById('story').classList.add('show');
+  document.getElementById('story-btn').onclick = () => {
+    closeStory();
+    if (onClose) onClose();
+  };
+}
+
+function closeStory() {
+  document.getElementById('story').classList.remove('show');
+}
+
+function renderSceneArt(type) {
+  const el = document.getElementById('scene-art');
+  let svg = '';
+  if (type === 'tree-dark') {
+    svg = `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect width="300" height="180" fill="#0a0a1e"/>
+      <circle cx="60" cy="30" r="2" fill="#fff" opacity="0.6"/><circle cx="240" cy="50" r="1.5" fill="#fff" opacity="0.5"/><circle cx="200" cy="20" r="2" fill="#fff" opacity="0.7"/>
+      <rect x="140" y="120" width="20" height="50" fill="#3d2814"/>
+      <rect x="120" y="80" width="60" height="50" fill="#2c1810"/>
+      <rect x="100" y="60" width="100" height="40" fill="#2c1810"/>
+      <rect x="115" y="50" width="70" height="30" fill="#2c1810"/>
+      <rect x="145" y="75" width="10" height="10" fill="#444" opacity="0.5"/>
+      <rect x="125" y="65" width="8" height="8" fill="#444" opacity="0.4"/>
+      <rect x="0" y="160" width="300" height="20" fill="#1a4a2e"/>
+      <text x="150" y="155" font-family="monospace" font-size="12" fill="#666" text-anchor="middle">the tree is dim...</text>
+    </svg>`;
+  } else if (type === 'meadow') {
+    svg = `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect width="300" height="120" fill="#87ceeb"/>
+      <rect y="120" width="300" height="60" fill="#6ab04c"/>
+      <ellipse cx="60" cy="40" rx="25" ry="10" fill="#fff" opacity="0.9"/>
+      <ellipse cx="220" cy="30" rx="30" ry="12" fill="#fff" opacity="0.85"/>
+      <rect x="40" y="60" width="30" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="55" y="76" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">go</text>
+      <rect x="130" y="80" width="40" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="150" y="96" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">the</text>
+      <rect x="220" y="50" width="30" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="235" y="66" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">it</text>
+    </svg>`;
+  } else if (type === 'cavern') {
+    svg = `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect width="300" height="180" fill="#34495e"/>
+      <polygon points="0,0 60,40 0,80" fill="#2c3e50"/>
+      <polygon points="300,0 240,40 300,80" fill="#2c3e50"/>
+      <polygon points="0,180 60,140 0,100" fill="#1c2833"/>
+      <polygon points="300,180 240,140 300,100" fill="#1c2833"/>
+      <rect x="80" y="80" width="30" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="95" y="96" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">are</text>
+      <rect x="180" y="60" width="40" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="200" y="76" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">said</text>
+      <circle cx="60" cy="120" r="2" fill="#50c878"/><circle cx="240" cy="100" r="2" fill="#50c878"/><circle cx="150" cy="150" r="3" fill="#ffd700"/>
+    </svg>`;
+  } else if (type === 'deep') {
+    svg = `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect width="300" height="180" fill="#4a0e0e"/>
+      <rect y="140" width="300" height="40" fill="#c0392b"/>
+      <rect y="135" width="300" height="6" fill="#ffd700" opacity="0.8"/>
+      <polygon points="0,0 40,30 0,60" fill="#2c0808"/>
+      <polygon points="300,0 260,30 300,60" fill="#2c0808"/>
+      <rect x="100" y="40" width="40" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="120" y="56" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">when</text>
+      <rect x="180" y="80" width="40" height="20" fill="#a0703f" stroke="#6b4423" stroke-width="3"/>
+      <text x="200" y="96" font-family="monospace" font-size="11" fill="#2c1810" text-anchor="middle" font-weight="bold">were</text>
+      <circle cx="50" cy="160" r="3" fill="#ffd700"/><circle cx="150" cy="170" r="2" fill="#ff6b35"/><circle cx="250" cy="160" r="3" fill="#ffd700"/>
+    </svg>`;
+  } else if (type.startsWith('tree-')) {
+    const lit = type === 'tree-full' ? 3 : type === 'tree-2' ? 2 : type === 'tree-1' ? 1 : 0;
+    svg = renderTreeSVG(lit, 300, 180);
+  } else if (type === 'tool') {
+    svg = `<svg viewBox="0 0 300 180" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect width="300" height="180" fill="#1a3a5c"/>
+      <text x="150" y="120" font-size="100" text-anchor="middle">⛏️</text>
+      <circle cx="60" cy="50" r="2" fill="#ffd700"/><circle cx="240" cy="40" r="2" fill="#ffd700"/><circle cx="200" cy="80" r="1.5" fill="#fff"/><circle cx="80" cy="100" r="1.5" fill="#fff"/>
+    </svg>`;
+  }
+  el.innerHTML = svg;
+}
+
+function renderTreeSVG(branchesLit, w=200, h=240) {
+  const branches = [
+    { x: 70, y: 60, color: '#50c878' },   // left
+    { x: 95, y: 30, color: '#4a90e2' },   // top
+    { x: 130, y: 60, color: '#ff6b35' }   // right
+  ];
+  let svg = `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">`;
+  // Sky background
+  svg += `<rect width="${w}" height="${h*0.75}" fill="${branchesLit >= 3 ? '#4a90e2' : branchesLit >= 1 ? '#2d5a8c' : '#0a0a1e'}"/>`;
+  svg += `<rect y="${h*0.75}" width="${w}" height="${h*0.25}" fill="#1a4a2e"/>`;
+  // Stars when dim
+  if (branchesLit < 2) {
+    svg += `<circle cx="${w*0.1}" cy="${h*0.15}" r="1.5" fill="#fff" opacity="0.7"/>`;
+    svg += `<circle cx="${w*0.85}" cy="${h*0.2}" r="2" fill="#fff" opacity="0.6"/>`;
+    svg += `<circle cx="${w*0.6}" cy="${h*0.1}" r="1.5" fill="#fff" opacity="0.8"/>`;
+  }
+  // Trunk
+  const cx = w/2;
+  const trunkColor = branchesLit > 0 ? '#8b5a2b' : '#3d2814';
+  svg += `<rect x="${cx-8}" y="${h*0.55}" width="16" height="${h*0.3}" fill="${trunkColor}"/>`;
+  // Crystal branches (3 levels)
+  const positions = [
+    { x: cx-30, y: h*0.45, color: '#50c878' },  // left
+    { x: cx,    y: h*0.25, color: '#4a90e2' },  // top
+    { x: cx+30, y: h*0.45, color: '#ff6b35' }   // right
+  ];
+  positions.forEach((p, i) => {
+    const lit = i < branchesLit;
+    const c = lit ? p.color : '#333';
+    // Crystal shape
+    svg += `<polygon points="${p.x},${p.y-15} ${p.x+12},${p.y} ${p.x},${p.y+12} ${p.x-12},${p.y}" fill="${c}" stroke="${lit?'#fff':'#222'}" stroke-width="2"/>`;
+    if (lit) {
+      // Glow
+      svg += `<circle cx="${p.x}" cy="${p.y}" r="20" fill="${p.color}" opacity="0.3"/>`;
+    }
+    // Connecting line to trunk
+    svg += `<line x1="${cx}" y1="${h*0.55}" x2="${p.x}" y2="${p.y}" stroke="${trunkColor}" stroke-width="3"/>`;
+  });
+  return svg + '</svg>';
+}
+
+function save() { try { localStorage.setItem('elijahWordCatcher', JSON.stringify(state)); } catch(e){} }
+function load() {
+  try {
+    const s = localStorage.getItem('elijahWordCatcher');
+    if (s) Object.assign(state, JSON.parse(s));
+  } catch(e){}
+}
+
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) { try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
+  return audioCtx;
+}
+function playTone(freq, duration, type='sine', vol=0.2) {
+  if (state.muted) return;
+  const ctx = getAudio(); if (!ctx) return;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type; osc.frequency.value = freq;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e){}
+}
+function playCorrect() {
+  playTone(523, 0.08, 'square', 0.15);
+  setTimeout(()=>playTone(659, 0.08, 'square', 0.15), 80);
+  setTimeout(()=>playTone(784, 0.16, 'square', 0.15), 160);
+}
+function playWrong() {
+  playTone(220, 0.15, 'sawtooth', 0.12);
+  setTimeout(()=>playTone(180, 0.2, 'sawtooth', 0.12), 100);
+}
+function playMiss() { playTone(150, 0.3, 'sine', 0.15); }
+function playUnlock() { [523, 659, 784, 1047].forEach((f,i) => setTimeout(()=>playTone(f, 0.15, 'triangle', 0.18), i*100)); }
+function playTame() {
+  playTone(659, 0.1, 'sine', 0.15);
+  setTimeout(()=>playTone(880, 0.2, 'sine', 0.15), 100);
+}
+
+let voices = [];
+function loadVoices() { voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []; }
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+function pickVoice() {
+  if (!voices.length) return null;
+  const preferred = voices.find(v => /en[-_]?US/i.test(v.lang) && /(female|samantha|karen|victoria|allison|google.*us)/i.test(v.name));
+  return preferred || voices.find(v => /^en/i.test(v.lang)) || voices[0];
+}
+function speak(text, rate) {
+  if (state.muted) return false;
+  if (!('speechSynthesis' in window)) {
+    speechWorks = false;
+    return false;
+  }
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = rate || SPEEDS[state.speedIdx].rate;
+    u.pitch = 1.15;
+    u.volume = 1;
+    const v = pickVoice();
+    if (v) u.voice = v;
+    let started = false;
+    u.onstart = () => { started = true; speechWorks = true; };
+    u.onerror = () => { speechWorks = false; updateTargetDisplay(); };
+    window.speechSynthesis.speak(u);
+    // After a moment, if it never started, mark speech as broken
+    setTimeout(() => {
+      if (!started && speechWorks !== true) {
+        speechWorks = false;
+        updateTargetDisplay();
+      }
+    }, 800);
+    return true;
+  } catch(e) {
+    speechWorks = false;
+    return false;
+  }
+}
+
+function shouldShowWord() {
+  if (state.showWordMode === 'always') return true;
+  if (state.showWordMode === 'never') return false;
+  // auto: show if speech is broken or muted
+  return speechWorks === false || state.muted;
+}
+
+function updateTargetDisplay() {
+  if (!round || !round.targetWord) return;
+  const btn = document.getElementById('listen-btn');
+  if (!btn) return;
+  if (shouldShowWord()) {
+    btn.innerHTML = `🔊 <b style="font-size:1.3em;">${round.targetWord}</b>`;
+  } else {
+    btn.innerHTML = '🔊 Listen Again';
+  }
+}
+
+function renderCreature(el, creature) {
+  const patterns = {
+    fluffwolf: ['..XX..XX..','.XXXXXXXX.','XXEXXXXEXX','XXXXXXXXXX','XXXBXXBXXX','.XXXXXXXX.','..XX..XX..','..X....X..'],
+    blockcat:  ['.X.....X..','XXX...XXX.','XXXXXXXXX.','XXEXXXEXX.','XXXXBXXXX.','XXXXXXXXX.','.XXXXXXX..','..X...X...'],
+    skybird:   ['...XX.....','..XXXX....','.XXEXXX...','XXXXXXXX..','.XXXXXXX..','..XXXXX...','...XXX....','...X.X....'],
+    riverotter:['..XX...XX.','.XEXX.XEXX','XXXXXXXXXX','XXXXBXXXXX','XXXXXXXXXX','.XXXXXXXX.','..XX..XX..','...X..X...'],
+    leafbug:   ['..XXXXXX..','.XXEXXEXX.','XXXXXXXXXX','XXXXBXXXXX','XXXXXXXXXX','XX.XXXX.XX','X..XXXX..X','....XX....'],
+    starfox:   ['X..XX..X..','XX.XX.XX..','.XXXXXXX..','XXEXXXEXX.','XXXXBXXXX.','XXXXXXXXX.','.XXXXXXX..','.X.....X..'],
+    cloudpuff: ['..XXXX....','.XXXXXXX..','XXEXXXEXX.','XXXXBXXXX.','XXXXXXXXX.','.XXXXXXX..','..XXXXX...','...X.X....'],
+    rockpup:   ['..XX..XX..','.XXXXXXXX.','XXEXXXXEXX','XXXXBBXXXX','XXXXXXXXXX','.XXXXXXXX.','.X.XXXX.X.','.X......X.']
+  };
+  const pattern = patterns[creature.id] || patterns.fluffwolf;
+  const cell = 10;
+  let svg = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">`;
+  for (let y=0; y<pattern.length; y++) {
+    for (let x=0; x<pattern[y].length; x++) {
+      const c = pattern[y][x];
+      let color = null;
+      if (c === 'X') color = creature.color;
+      else if (c === 'E') color = '#000';
+      else if (c === 'B') color = creature.accent;
+      if (color) svg += `<rect x="${x*cell}" y="${y*cell}" width="${cell}" height="${cell}" fill="${color}"/>`;
+    }
+  }
+  svg += '</svg>';
+  el.innerHTML = svg;
+}
+
+function renderBasket() {
+  const el = document.getElementById('basket');
+  el.innerHTML = `
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" style="width:100%; height:100%;">
+      <rect x="25" y="10" width="50" height="8" fill="#8b4513"/>
+      <rect x="20" y="18" width="60" height="6" fill="#8b4513"/>
+      <rect x="30" y="24" width="40" height="22" fill="#fdbcb4"/>
+      <rect x="36" y="32" width="6" height="6" fill="#000"/>
+      <rect x="58" y="32" width="6" height="6" fill="#000"/>
+      <rect x="40" y="40" width="20" height="3" fill="#8b4513"/>
+      <rect x="28" y="46" width="44" height="24" fill="#50c878"/>
+      <rect x="30" y="50" width="40" height="2" fill="#2e8b57"/>
+      <rect x="20" y="48" width="8" height="18" fill="#fdbcb4"/>
+      <rect x="72" y="48" width="8" height="18" fill="#fdbcb4"/>
+      <rect x="30" y="70" width="40" height="20" fill="#a0703f"/>
+      <rect x="32" y="72" width="36" height="3" fill="#6b4423"/>
+      <rect x="32" y="78" width="36" height="3" fill="#6b4423"/>
+      <rect x="32" y="84" width="36" height="3" fill="#6b4423"/>
+      <rect x="36" y="90" width="10" height="8" fill="#4a4a4a"/>
+      <rect x="54" y="90" width="10" height="8" fill="#4a4a4a"/>
+    </svg>
+  `;
+}
+
+function setupTitle() {
+  renderCreature(document.getElementById('title-c1'), CREATURES[0]);
+  renderCreature(document.getElementById('title-c2'), CREATURES[2]);
+  renderCreature(document.getElementById('title-c3'), CREATURES[5]);
+}
+
+function goHome() {
+  endRound();
+  hideAll();
+  document.getElementById('title').style.display = 'flex';
+  document.getElementById('hud').style.display = 'none';
+}
+function goZoneSelect() {
+  hideAll();
+  document.getElementById('hud').style.display = 'flex';
+  updateHUD();
+  // First-time intro
+  if (!state.storyBeats.intro) {
+    showStory('intro', () => {
+      document.getElementById('zone-select').classList.add('show');
+    });
+  } else {
+    document.getElementById('zone-select').classList.add('show');
+  }
+}
+function hideAll() {
+  document.getElementById('title').style.display = 'none';
+  document.getElementById('zone-select').classList.remove('show');
+  document.getElementById('play').classList.remove('active');
+  document.getElementById('base-view').classList.remove('show');
+  document.getElementById('settings').classList.remove('show');
+  document.getElementById('endgame').classList.remove('show');
+  document.getElementById('tool-unlock').classList.remove('show');
+}
+
+let round = null;
+let pendingStory = null;
+
+function startGame(zoneIdx) {
+  // Zone intro story (first time entering this zone)
+  const introKey = ['meadow_intro','cavern_intro','deep_intro'][zoneIdx];
+  if (!state.storyBeats[introKey]) {
+    showStory(introKey, () => doStartGame(zoneIdx));
+    return;
+  }
+  doStartGame(zoneIdx);
+}
+
+function doStartGame(zoneIdx) {
+  hideAll();
+  document.getElementById('play').classList.add('active');
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('lives-stat').style.display = 'flex';
+  document.getElementById('game').style.background = ZONES[zoneIdx].bg;
+  renderBasket();
+  spawnClouds();
+
+  round = {
+    zone: zoneIdx,
+    targetWord: '',
+    blocks: [],
+    lives: 3,
+    caught: 0,
+    needToCatch: 7,
+    speedMul: ZONES[zoneIdx].baseSpeed,
+    lastFrame: performance.now(),
+    running: true,
+    waveActive: false
+  };
+  updateLives();
+  showCelebration("LISTEN!");
+  setTimeout(() => spawnWave(), 1200);
+  requestAnimationFrame(gameLoop);
+}
+
+function endRound() {
+  if (round) round.running = false;
+  document.querySelectorAll('.word-block').forEach(b => b.remove());
+  if (round) round.blocks = [];
+  round = null;
+  document.getElementById('lives-stat').style.display = 'none';
+}
+
+function similarLooking(a, b) {
+  if (a === b) return true;
+  if (a.length < 3 || b.length < 3) return false;
+  if (a.startsWith(b) || b.startsWith(a)) return true;
+  return false;
+}
+
+function spawnWave() {
+  if (!round || !round.running || round.waveActive) return;
+  round.waveActive = true;
+
+  const list = WORD_LISTS[round.zone];
+  let target;
+  const strugglesInZone = Object.keys(state.struggles).filter(w => list.includes(w) && state.struggles[w] >= 1);
+  if (strugglesInZone.length && Math.random() < 0.35) {
+    target = strugglesInZone[Math.floor(Math.random()*strugglesInZone.length)];
+  } else {
+    target = list[Math.floor(Math.random()*list.length)];
+  }
+  round.targetWord = target;
+
+  // Speak the word a moment later (after speech engine is ready)
+  setTimeout(() => speak(target), 100);
+  updateTargetDisplay();
+
+  const numDistractors = ZONES[round.zone].distractors;
+  const distractors = [];
+  let attempts = 0;
+  while (distractors.length < numDistractors && attempts < 30) {
+    const w = list[Math.floor(Math.random()*list.length)];
+    if (w !== target && !distractors.includes(w) && !similarLooking(w, target)) {
+      distractors.push(w);
+    }
+    attempts++;
+  }
+  // Fallback if we couldn't find enough distinct distractors
+  while (distractors.length < numDistractors) {
+    const w = list[Math.floor(Math.random()*list.length)];
+    if (w !== target && !distractors.includes(w)) distractors.push(w);
+  }
+
+  const allWords = [target, ...distractors];
+  for (let i = allWords.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+  }
+
+  const playRect = document.getElementById('play').getBoundingClientRect();
+  const isNarrow = playRect.width < 600;
+  const margin = isNarrow ? 30 : 60;
+  const blockEstWidth = isNarrow ? 80 : 130;
+  const usableWidth = Math.max(playRect.width - margin*2 - blockEstWidth, 100);
+  const slotWidth = usableWidth / Math.max(allWords.length - 1, 1);
+  // Start blocks higher up on tall narrow screens, lower on wide
+  const startY = isNarrow ? 120 : 160;
+
+  allWords.forEach((word, idx) => {
+    const block = document.createElement('div');
+    block.className = 'word-block';
+    block.textContent = word;
+    document.getElementById('play').appendChild(block);
+
+    const x = margin + slotWidth * idx;
+    block.style.left = x + 'px';
+    block.style.top = startY + 'px';
+
+    const obj = {
+      el: block,
+      word: word,
+      x: x,
+      y: startY,
+      vy: round.speedMul * (0.7 + Math.random()*0.25),
+      isTarget: word === target,
+      caught: false
+    };
+
+    const onTap = (e) => {
+      if (e) e.preventDefault();
+      catchBlock(obj);
+    };
+    block.addEventListener('click', onTap);
+    block.addEventListener('touchstart', onTap, { passive: false });
+
+    round.blocks.push(obj);
+  });
+}
+
+function speakTarget() {
+  if (round && round.targetWord) speak(round.targetWord);
+}
+
+function catchBlock(obj) {
+  if (!round || !round.running || obj.caught) return;
+
+  if (obj.isTarget) {
+    obj.caught = true;
+    obj.el.classList.add('correct', 'caught');
+    playCorrect();
+    state.gems += 3;
+    state.wordsCaught++;
+    state.mastery[obj.word] = (state.mastery[obj.word]||0) + 1;
+    round.caught++;
+    showFloatingGems(obj.x, obj.y, 3);
+    showCelebration(CELEBRATIONS[Math.floor(Math.random()*CELEBRATIONS.length)]);
+    setTimeout(() => speak(obj.word), 200);
+    setTimeout(() => clearWave(true), 700);
+
+    checkRoundEnd();
+    checkToolUnlock();
+    checkCreatureSpawn();
+    updateHUD();
+    save();
+  } else {
+    // Wrong choice - flash red, count as a struggle, but let them try again
+    obj.el.classList.add('wrong');
+    playWrong();
+    state.struggles[round.targetWord] = (state.struggles[round.targetWord]||0) + 1;
+    setTimeout(() => {
+      obj.el.classList.remove('wrong');
+      speak(round.targetWord);
+    }, 500);
+    save();
+  }
+}
+
+function clearWave(success) {
+  if (!round) return;
+  round.blocks.forEach(b => {
+    if (!b.caught) {
+      b.el.style.transition = 'opacity 0.4s, transform 0.4s';
+      b.el.style.opacity = '0';
+      b.el.style.transform = 'scale(0.8)';
+      setTimeout(() => b.el.remove(), 400);
+    } else {
+      setTimeout(() => b.el.remove(), 400);
+    }
+  });
+  round.blocks = [];
+  round.waveActive = false;
+  if (round.running && success) {
+    setTimeout(() => spawnWave(), 1200);
+  }
+}
+
+function gameLoop(now) {
+  if (!round || !round.running) return;
+  const dt = Math.min(now - round.lastFrame, 50);
+  round.lastFrame = now;
+
+  const playRect = document.getElementById('play').getBoundingClientRect();
+  const groundY = playRect.height * 0.88 - 80;
+
+  // Basket position is player-controlled (see touch/mouse handlers below)
+  // It does NOT auto-track the correct answer.
+
+  for (const b of round.blocks) {
+    if (b.caught) continue;
+    b.y += b.vy * dt * 0.06;
+    b.el.style.top = b.y + 'px';
+
+    // Check if block landed in the basket
+    const basketEl = document.getElementById('basket');
+    const basketRect = basketEl.getBoundingClientRect();
+    const blockRect = b.el.getBoundingClientRect();
+    const overlap = !(blockRect.right < basketRect.left ||
+                      blockRect.left > basketRect.right ||
+                      blockRect.bottom < basketRect.top + 20 ||
+                      blockRect.top > basketRect.bottom);
+    if (overlap && b.y > groundY - 80) {
+      catchBlock(b);
+      continue;
+    }
+
+    if (b.y > groundY) {
+      if (b.isTarget) {
+        playMiss();
+        round.lives--;
+        updateLives();
+        state.struggles[b.word] = (state.struggles[b.word]||0) + 1;
+        showCelebration("Try Again!");
+        b.el.style.opacity = '0';
+        setTimeout(() => b.el.remove(), 300);
+        b.caught = true;
+        save();
+        setTimeout(() => clearWave(true), 600);
+        if (round.lives <= 0) {
+          setTimeout(() => endGame(false), 1000);
+          return;
+        }
+        break;
+      } else {
+        b.el.style.opacity = '0';
+        setTimeout(() => b.el.remove(), 300);
+        b.caught = true;
+      }
+    }
+  }
+
+  if (round.running) requestAnimationFrame(gameLoop);
+}
+
+function checkRoundEnd() {
+  if (round.caught >= round.needToCatch) {
+    setTimeout(() => endGame(true), 800);
+  }
+}
+
+function endGame(won) {
+  if (!round) return;
+  const wonZone = round.zone;
+  round.running = false;
+  document.querySelectorAll('.word-block').forEach(b => b.remove());
+  document.getElementById('endgame-title').textContent = won ? '🎉 LEVEL CLEAR! 🎉' : 'Out of Hearts!';
+  document.getElementById('endgame-stats').innerHTML = `
+    Words caught: <b>${round.caught}</b><br>
+    Gems earned: <b>${round.caught * 3}</b><br>
+    ${won ? '⭐ Great job, Elijah! ⭐' : 'Keep practicing — you got this!'}
+  `;
+  document.getElementById('endgame').classList.add('show');
+  if (won) {
+    playUnlock();
+    // Track zone completion (highest reached)
+    if (wonZone + 1 > state.zonesCompleted) {
+      state.zonesCompleted = wonZone + 1;
+      save();
+      // Queue zone-clear story to show after endgame closes
+      const clearKey = ['meadow_clear','cavern_clear','deep_clear'][wonZone];
+      pendingStory = clearKey;
+    }
+  }
+}
+
+function closeEndgame() {
+  document.getElementById('endgame').classList.remove('show');
+  endRound();
+  if (pendingStory) {
+    const beat = pendingStory;
+    pendingStory = null;
+    showStory(beat, () => goZoneSelect());
+  } else {
+    goZoneSelect();
+  }
+}
+
+function updateLives() {
+  if (!round) return;
+  const c = document.getElementById('lives');
+  c.innerHTML = '';
+  for (let i=0; i<3; i++) {
+    const h = document.createElement('div');
+    h.className = 'heart' + (i >= round.lives ? ' lost' : '');
+    c.appendChild(h);
+  }
+}
+
+function showFloatingGems(x, y, count) {
+  for (let i=0; i<count; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle gem-particle float-up';
+    p.style.left = (x + (Math.random()-0.5)*60) + 'px';
+    p.style.top = y + 'px';
+    p.style.animationDelay = (i*0.1) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1300);
+  }
+  for (let i=0; i<2; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle star-particle float-up';
+    p.style.left = (x + (Math.random()-0.5)*80) + 'px';
+    p.style.top = y + 'px';
+    p.style.animationDelay = (i*0.15) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1300);
+  }
+}
+
+function showCelebration(text) {
+  const el = document.getElementById('celebration-msg');
+  el.textContent = text;
+  document.getElementById('celebration').classList.add('show');
+  setTimeout(() => document.getElementById('celebration').classList.remove('show'), 1100);
+}
+
+function spawnClouds() {
+  document.querySelectorAll('.cloud').forEach(c => c.remove());
+  const play = document.getElementById('play');
+  for (let i=0; i<4; i++) {
+    const c = document.createElement('div');
+    c.className = 'cloud';
+    const size = 60 + Math.random()*60;
+    c.style.width = size + 'px';
+    c.style.height = (size*0.5) + 'px';
+    c.style.left = (Math.random()*80 + 10) + '%';
+    c.style.top = (Math.random()*30 + 5) + '%';
+    c.style.opacity = (0.5 + Math.random()*0.4);
+    play.appendChild(c);
+  }
+}
+
+function checkToolUnlock() {
+  for (let i = TOOLS.length - 1; i >= 0; i--) {
+    if (state.wordsCaught >= TOOLS[i].threshold && state.toolIdx < i) {
+      state.toolIdx = i;
+      showToolUnlock(TOOLS[i]);
+      return;
+    }
+  }
+}
+function showToolUnlock(tool) {
+  document.getElementById('unlock-icon').textContent = tool.icon;
+  document.getElementById('unlock-name').textContent = `${tool.name} Pickaxe`;
+  document.getElementById('tool-unlock').classList.add('show');
+  playUnlock();
+  if (round) round.running = false;
+}
+function closeUnlock() {
+  document.getElementById('tool-unlock').classList.remove('show');
+  if (round) {
+    round.running = true;
+    round.lastFrame = performance.now();
+    requestAnimationFrame(gameLoop);
+  }
+}
+
+function checkCreatureSpawn() {
+  if (state.wordsCaught % 5 === 0) {
+    const available = CREATURES.filter(c => !state.tamedCreatures.includes(c.id));
+    if (available.length) {
+      const c = available[Math.floor(Math.random()*available.length)];
+      state.tamedCreatures.push(c.id);
+      showTameCreature(c);
+    }
+  }
+}
+function showTameCreature(c) {
+  renderCreature(document.getElementById('popup-creature'), c);
+  document.getElementById('popup-name').textContent = `Tamed a ${c.name}!`;
+  document.getElementById('popup-msg').textContent = 'It joined your base!';
+  document.getElementById('creature-popup').classList.add('show');
+  playTame();
+  setTimeout(() => document.getElementById('creature-popup').classList.remove('show'), 2000);
+}
+
+function updateHUD() {
+  document.getElementById('gem-count').textContent = state.gems;
+  const tool = TOOLS[state.toolIdx];
+  document.getElementById('tool-icon').textContent = tool.icon;
+  document.getElementById('tool-name').textContent = tool.name;
+  if (round) updateLives();
+}
+
+function showBase() {
+  hideAll();
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('base-view').classList.add('show');
+
+  const masteredCount = Object.keys(state.mastery).filter(w => state.mastery[w] >= 3).length;
+  const treeStatusText = state.zonesCompleted === 0 ? "The Crystal Tree is dim... catch words to light it!" :
+                         state.zonesCompleted === 1 ? "One branch glows! Keep going!" :
+                         state.zonesCompleted === 2 ? "Two branches glow! Almost there!" :
+                         "🌟 The Crystal Tree shines bright! 🌟";
+
+  document.getElementById('base-stats').innerHTML = `
+    <div style="width:100%; text-align:center; margin-bottom:10px;">
+      <div id="crystal-tree" class="${state.zonesCompleted >= 3 ? 'glowing' : ''}">${renderTreeSVG(state.zonesCompleted, 200, 240)}</div>
+      <div class="tree-status">${treeStatusText}</div>
+      <div class="tree-progress">
+        <div class="branch-pip ${state.zonesCompleted >= 1 ? 'lit' : ''}"></div>
+        <div class="branch-pip ${state.zonesCompleted >= 2 ? 'lit' : ''}"></div>
+        <div class="branch-pip ${state.zonesCompleted >= 3 ? 'lit' : ''}"></div>
+      </div>
+    </div>
+    <div class="stat-card"><div class="label">💎 Gems</div><div class="value">${state.gems}</div></div>
+    <div class="stat-card"><div class="label">📖 Caught</div><div class="value">${state.wordsCaught}</div></div>
+    <div class="stat-card"><div class="label">⭐ Mastered</div><div class="value">${masteredCount}</div></div>
+    <div class="stat-card"><div class="label">${TOOLS[state.toolIdx].icon} Tool</div><div class="value" style="font-size:18px;">${TOOLS[state.toolIdx].name}</div></div>
+    <div class="stat-card"><div class="label">🐾 Creatures</div><div class="value">${state.tamedCreatures.length}/${CREATURES.length}</div></div>
+  `;
+
+  const area = document.getElementById('creature-area');
+  area.innerHTML = '';
+  if (state.tamedCreatures.length === 0) {
+    area.innerHTML = '<div style="text-align:center; padding:40px; color:#fff; text-shadow:2px 2px 0 #000; font-size:18px;">Catch words to tame creatures!<br>They will live here. 🌳</div>';
+  } else {
+    state.tamedCreatures.forEach((id, i) => {
+      const c = CREATURES.find(x => x.id === id);
+      const div = document.createElement('div');
+      div.className = 'roaming-creature';
+      div.style.left = (5 + (i * 22) % 80) + '%';
+      div.style.bottom = (10 + (i % 3) * 75) + 'px';
+      renderCreature(div, c);
+      const label = document.createElement('div');
+      label.style.cssText = 'position:absolute; bottom:66px; left:0; width:64px; text-align:center; font-size:10px; color:#fff; text-shadow:1px 1px 0 #000; font-weight:bold;';
+      label.textContent = c.name;
+      div.appendChild(label);
+      area.appendChild(div);
+    });
+    animateCreatures();
+  }
+}
+
+let creatureAnim = null;
+function animateCreatures() {
+  if (creatureAnim) clearInterval(creatureAnim);
+  creatureAnim = setInterval(() => {
+    document.querySelectorAll('.roaming-creature').forEach(c => {
+      const cur = parseFloat(c.style.left) || 50;
+      let next = cur + (Math.random()-0.5) * 15;
+      if (next < 3) next = 3;
+      if (next > 85) next = 85;
+      c.style.transform = (next < cur) ? 'scaleX(-1)' : 'scaleX(1)';
+      c.style.left = next + '%';
+    });
+  }, 2000);
+}
+
+function openSettings() {
+  document.getElementById('settings').classList.add('show');
+  document.getElementById('mute-btn').textContent = state.muted ? 'OFF' : 'ON';
+  document.getElementById('speed-btn').textContent = SPEEDS[state.speedIdx].label;
+  const showLabels = { auto: 'Auto', always: 'Always', never: 'Never' };
+  document.getElementById('showword-btn').textContent = showLabels[state.showWordMode];
+  const sorted = Object.entries(state.struggles).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const sw = document.getElementById('struggle-words');
+  sw.innerHTML = sorted.length ? sorted.map(([w,c]) => `<span class="word-item">${w} (${c})</span>`).join('') : '<div style="opacity:0.7;">No data yet — play to see!</div>';
+}
+function closeSettings() { document.getElementById('settings').classList.remove('show'); }
+function toggleMute() {
+  state.muted = !state.muted;
+  document.getElementById('mute-btn').textContent = state.muted ? 'OFF' : 'ON';
+  save();
+}
+function cycleSpeed() {
+  state.speedIdx = (state.speedIdx + 1) % SPEEDS.length;
+  document.getElementById('speed-btn').textContent = SPEEDS[state.speedIdx].label;
+  save();
+  speak("Hello Elijah");
+}
+function cycleShowWord() {
+  const modes = ['auto', 'always', 'never'];
+  const labels = { auto: 'Auto', always: 'Always', never: 'Never' };
+  const cur = modes.indexOf(state.showWordMode);
+  state.showWordMode = modes[(cur + 1) % modes.length];
+  document.getElementById('showword-btn').textContent = labels[state.showWordMode];
+  save();
+  if (round) updateTargetDisplay();
+}
+function resetProgress() {
+  if (confirm("Reset all of Elijah's progress?")) {
+    state = { gems: 0, wordsCaught: 0, toolIdx: 0, mastery: {}, struggles: {}, tamedCreatures: [], muted: false, speedIdx: 1, storyBeats: {}, zonesCompleted: 0, showWordMode: 'auto' };
+    save();
+    closeSettings();
+    goHome();
+  }
+}
+
+load();
+setupTitle();
+updateHUD();
+
+// Player-controlled basket: follow finger/mouse horizontally during play
+function moveBasketTo(clientX) {
+  if (!round || !round.running) return;
+  const playEl = document.getElementById('play');
+  const rect = playEl.getBoundingClientRect();
+  const pct = ((clientX - rect.left) / rect.width) * 100;
+  const clamped = Math.max(8, Math.min(92, pct));
+  document.getElementById('basket').style.left = clamped + '%';
+}
+document.getElementById('play').addEventListener('mousemove', (e) => moveBasketTo(e.clientX));
+document.getElementById('play').addEventListener('touchmove', (e) => {
+  if (e.touches && e.touches[0]) moveBasketTo(e.touches[0].clientX);
+}, { passive: true });
+document.getElementById('play').addEventListener('touchstart', (e) => {
+  if (e.touches && e.touches[0]) moveBasketTo(e.touches[0].clientX);
+}, { passive: true });
+
+function unlockAudio() {
+  getAudio();
+  if (!('speechSynthesis' in window)) {
+    speechWorks = false;
+    return;
+  }
+  try {
+    const u = new SpeechSynthesisUtterance(' ');
+    u.volume = 0;
+    let started = false;
+    u.onstart = () => { started = true; speechWorks = true; };
+    u.onerror = () => { speechWorks = false; };
+    window.speechSynthesis.speak(u);
+    setTimeout(() => {
+      if (!started) speechWorks = false;
+    }, 1000);
+  } catch(e) {
+    speechWorks = false;
+  }
+}
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('click', unlockAudio, { once: true });
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
+</script>
+</body>
+</html>
